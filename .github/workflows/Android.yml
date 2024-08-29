@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Windows Build CI
+name: Android Build CI
 
 # Controls when the workflow will run
 on: [push, pull_request]
@@ -30,38 +30,35 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v1
-      
+          
       - uses: krdlab/setup-haxe@v1
         with:
           haxe-version: 4.2.5
       # Runs a set of commands using the runners shell
       - name: script run line haha
         run: |
-          # choco install haxe --version 4.2.5 -y
-          # RefreshEnv
-          sudo add-apt-repository ppa:haxe/releases -y
-          sudo apt-get update
-          sudo apt-get install gcc-multilib g++-multilib haxe -y
-          mkdir "%HAXELIB_ROOT%"
-          haxelib setup "%HAXELIB_ROOT%"
+          haxelib setup ~/haxelib
           haxelib install lime 7.9.0
-          # RefreshEnv
           haxelib install openfl 9.1.0
-          haxelib install flixel 4.9.0
+          haxelib install flixel 4.11.0
           haxelib run lime setup flixel
-          haxelib run lime setup --quiet
+          haxelib run lime setup
           haxelib install flixel-tools 1.5.1
           haxelib install flixel-addons 2.10.0
           haxelib install flixel-ui 2.3.3
           haxelib install hscript
+          haxelib install newgrounds 1.4.0
           haxelib git faxe https://github.com/uhrobots/faxe
-          haxelib git polymod https://github.com/MasterEric/polymod.git
+          haxelib git polymod https://github.com/larsiusprime/polymod.git f3c0320aa51c848318934c2893ed78f42b7de74c
           haxelib git discord_rpc https://github.com/Aidan63/linc_discord-rpc
+          haxelib git extension-androidtools https://github.com/MAJigsaw77/extension-androidtools.git 
           haxelib git extension-webm https://github.com/brusakas/extension-webm
           haxelib git linc_luajit https://github.com/nebulazorua/linc_luajit.git
           haxelib git hxvm-luajit https://github.com/nebulazorua/hxvm-luajit
           haxelib install actuate 
           haxelib list
+      - name: Create Version Tag
+        run: echo "${{github.run_id}}" > VERSION
 
       - name: Setup Lime
         run: |
@@ -70,15 +67,19 @@ jobs:
           haxelib run lime config ANDROID_NDK_ROOT $ANDROID_NDK_HOME
           haxelib run lime config JAVA_HOME $JAVA_HOME
           haxelib run lime config ANDROID_SETUP true
-          haxelib set lime 7.9.0
-          haxelib set openfl 9.1.0
         env:
           ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+
+      - name : Set hxcpp to git
+        run: |
+          haxelib git hxcpp https://github.com/HaxeFoundation/hxcpp.git
+          haxelib run lime rebuild hxcpp
           
       - name: Compile
-          haxelib run lime build android
-          
+        run: |
+          haxelib run lime build android -Dci --app-version="4.0.0-${{ github.run_id}}"
+         
       - uses: actions/upload-artifact@v2
         with:
           name: Android Build
-          path: export_sunday/release/android/bin/app/build/outputs/apk/debug
+          path: exportJon/release/android/bin/app/build/outputs/apk/debug
